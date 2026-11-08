@@ -1,0 +1,54 @@
+{
+  "course": "build-bloom-filter",
+  "language": "go",
+  "language_id": 1060,
+  "entrypoint": "main.go",
+  "version": 1,
+  "content_hash": "bd14a245b3b89555",
+  "lessons": [
+    {
+      "slug": "idea",
+      "tests_hash": "0a872d315742"
+    },
+    {
+      "slug": "fp-rate",
+      "tests_hash": "1d67219c8096"
+    },
+    {
+      "slug": "hashing",
+      "tests_hash": "5ddd22cb7430"
+    },
+    {
+      "slug": "tuned-bloom",
+      "tests_hash": "fc357b3f76e2"
+    },
+    {
+      "slug": "union-intersection",
+      "tests_hash": "ec85d1850346"
+    },
+    {
+      "slug": "counting-bloom",
+      "tests_hash": "b6c7da7f099f"
+    },
+    {
+      "slug": "scalable",
+      "tests_hash": "43fca0553d82"
+    },
+    {
+      "slug": "cuckoo",
+      "tests_hash": "c40367fb4f03"
+    },
+    {
+      "slug": "applications",
+      "tests_hash": "a328d75c278e"
+    },
+    {
+      "slug": "monitoring",
+      "tests_hash": "9dff86778100"
+    },
+    {
+      "slug": "full-bloom",
+      "tests_hash": "84f150aa69c7"
+    }
+  ]
+}

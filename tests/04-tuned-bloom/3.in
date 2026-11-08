@@ -1,0 +1,6 @@
+INIT 20 0.1
+ADD alpha
+CHECK alpha
+CHECK beta
+STATS
+DUMP

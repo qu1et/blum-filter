@@ -1,0 +1,6 @@
+ADD apple
+ADD pear
+CHECK seoul
+CHECK pear
+CHECK cherry
+BITS

@@ -1,0 +1,9 @@
+INIT a 64 2
+INIT b 64 3
+ADD a foo
+UNION u a b
+CHECK u foo
+INTERSECT i a b
+POPCOUNT i
+POPCOUNT zz
+UNION v a missing
