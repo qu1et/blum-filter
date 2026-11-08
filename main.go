@@ -3,8 +3,10 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
+	"math"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -29,19 +31,18 @@ func h2(key []byte) int {
 	return sum % 64
 }
 
-func forEachLine(handle func(cmd string, rest []byte)) {
-	data, _ := ioutil.ReadAll(os.Stdin)
-	for _, line := range bytes.Split(data, []byte("\n")) {
-		if len(line) == 0 {
-			continue
-		}
-		sp := bytes.IndexByte(line, ' ')
-		if sp < 0 {
-			handle(string(line), nil)
-		} else {
-			handle(string(line[:sp]), line[sp+1:])
-		}
-	}
+func optimal(p, n float64) (m, k float64) {
+	m = math.Ceil(-n * math.Log(p) / (math.Ln2 * math.Ln2))
+	k = math.Floor((m/n)*math.Ln2 + 0.5)
+	return
+}
+
+func fp(m, n, k float64) float64 {
+	return math.Pow(1-math.Exp(-k*n/m), k)
+}
+
+func bpi(p float64) float64 {
+	return -math.Log(p) / (math.Ln2 * math.Ln2)
 }
 
 func handle(cmd string, key []byte) {
@@ -61,10 +62,39 @@ func handle(cmd string, key []byte) {
 			fmt.Print(v)
 		}
 		fmt.Println()
+	case "OPTIMAL":
+		fields := strings.Fields(string(key))
+		p, _ := strconv.ParseFloat(fields[0], 64)
+		n, _ := strconv.ParseFloat(fields[1], 64)
+		m, k := optimal(p, n)
+		fmt.Printf("m=%d k=%d\n", int(m), int(k))
+	case "FP":
+		fields := strings.Fields(string(key))
+		m, _ := strconv.ParseFloat(fields[0], 64)
+		n, _ := strconv.ParseFloat(fields[1], 64)
+		k, _ := strconv.ParseFloat(fields[2], 64)
+		fmt.Printf("%.6f\n", fp(m, n, k))
+	case "BPI":
+		p, _ := strconv.ParseFloat(strings.TrimSpace(string(key)), 64)
+		fmt.Printf("%.4f\n", bpi(p))
+	}
+}
+
+func forEachLine(handle func(cmd string, rest []byte)) {
+	data, _ := io.ReadAll(os.Stdin)
+	for _, line := range bytes.Split(data, []byte("\n")) {
+		if len(line) == 0 {
+			continue
+		}
+		sp := bytes.IndexByte(line, ' ')
+		if sp < 0 {
+			handle(string(line), nil)
+		} else {
+			handle(string(line[:sp]), line[sp+1:])
+		}
 	}
 }
 
 func main() {
 	forEachLine(handle)
-	os.Stdout.WriteString(out.String())
 }
