@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -13,15 +14,19 @@ var bitArr [M]byte
 var out strings.Builder
 
 func h1(key []byte) int {
-	// TODO: sum of the key's bytes, mod 64
-	_ = key
-	return 0
+	sum := 0
+	for _, b := range key {
+		sum += int(b)
+	}
+	return sum % 64
 }
 
 func h2(key []byte) int {
-	// TODO: sum of byte * (index + 1), mod 64
-	_ = key
-	return 0
+	sum := 0
+	for i, b := range key {
+		sum += (i + 1) * int(b)
+	}
+	return sum % 64
 }
 
 func forEachLine(handle func(cmd string, rest []byte)) {
@@ -42,11 +47,20 @@ func forEachLine(handle func(cmd string, rest []byte)) {
 func handle(cmd string, key []byte) {
 	switch cmd {
 	case "ADD":
-		// TODO: set bits h1(key) and h2(key), then print OK
+		bitArr[h1(key)] = 1
+		bitArr[h2(key)] = 1
+		fmt.Println("OK")
 	case "CHECK":
-		// TODO: MAYBE only if both bits are 1, otherwise NO
+		if bitArr[h1(key)] == 1 && bitArr[h2(key)] == 1 {
+			fmt.Println("MAYBE")
+		} else {
+			fmt.Println("NO")
+		}
 	case "BITS":
-		// TODO: print the 64 bits as a string of 0 and 1, bit 0 first
+		for _, v := range bitArr {
+			fmt.Print(v)
+		}
+		fmt.Println()
 	}
 }
 
