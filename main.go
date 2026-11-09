@@ -18,24 +18,15 @@ const (
 	c2 = 0x1b873593
 )
 
-var bitArr [M]byte
-var out strings.Builder
-
-func h1(key []byte) int {
-	sum := 0
-	for _, b := range key {
-		sum += int(b)
-	}
-	return sum % 64
+type Bloom struct {
+	m     int
+	k     int
+	bits  []byte
+	adds  int
+	nInit int
 }
 
-func h2(key []byte) int {
-	sum := 0
-	for i, b := range key {
-		sum += (i + 1) * int(b)
-	}
-	return sum % 64
-}
+var bloom Bloom
 
 func optimal(p, n float64) (m, k float64) {
 	m = math.Ceil(-n * math.Log(p) / (math.Ln2 * math.Ln2))
@@ -100,37 +91,53 @@ func hashes(key []byte) (uint32, uint32) {
 	return ha, hb
 }
 
-func postions(m, k, key []byte) []string {
-	var pos []string
-	k_i, _ := strconv.Atoi(string(k))
-	m_i, _ := strconv.Atoi(string(m))
+func (b *Bloom) postions(key []byte) []int {
 	ha, hb := hashes(key)
-
-	for i := range k_i {
-		p := (int(ha) + i*int(hb)) % m_i
-		pos = append(pos, strconv.FormatInt(int64(p), 10))
+	pos := make([]int, b.k)
+	for i := 0; i < b.k; i++ {
+		p := (int(ha) + i*int(hb)) % b.m
+		pos[i] = int(p)
 	}
-
 	return pos
+}
+
+func (b *Bloom) bloomInit(n, p []byte) (int, int) {
+	n1, _ := strconv.ParseFloat(string(n), 64)
+	p1, _ := strconv.ParseFloat(string(p), 64)
+	bloom.nInit = int(n1)
+	m := math.Ceil(-n1 * math.Log(p1) / (math.Ln2 * math.Ln2))
+	k := math.Floor(m/n1*math.Ln2 + 0.5)
+	k = max(k, 1)
+	b.m = int(m)
+	b.k = int(k)
+	b.adds = 0
+	b.bits = make([]byte, (int(b.m)+7)/8)
+	return b.m, b.k
 }
 
 func handle(cmd string, key []byte) {
 	switch cmd {
 	case "ADD":
-		bitArr[h1(key)] = 1
-		bitArr[h2(key)] = 1
+		for _, p := range bloom.postions(key) {
+			bloom.bits[p/8] |= 1 << (p % 8)
+		}
+		bloom.adds++
 		fmt.Println("OK")
 	case "CHECK":
-		if bitArr[h1(key)] == 1 && bitArr[h2(key)] == 1 {
+		isTaken := true
+		for _, p := range bloom.postions(key) {
+			if bloom.bits[p/8]&(1<<(p%8)) == 0 {
+				isTaken = false
+				break
+			}
+		}
+		if isTaken {
 			fmt.Println("MAYBE")
 		} else {
 			fmt.Println("NO")
 		}
 	case "BITS":
-		for _, v := range bitArr {
-			fmt.Print(v)
-		}
-		fmt.Println()
+		fmt.Printf("%x\n", bloom.bits)
 	case "OPTIMAL":
 		fields := strings.Fields(string(key))
 		p, _ := strconv.ParseFloat(fields[0], 64)
@@ -162,9 +169,24 @@ func handle(cmd string, key []byte) {
 		ha, hb := hashes(key)
 		fmt.Printf("ha=%08x hb=%08x\n", ha, hb)
 	case "POSITIONS":
-		fileds := bytes.Fields(key)
-		res := postions(fileds[0], fileds[1], fileds[2])
-		fmt.Println(strings.Join(res, ","))
+		res := bloom.postions(key)
+		str := fmt.Sprint(res)
+		str = strings.Trim(str, "[]")
+		str = strings.ReplaceAll(str, " ", ",")
+		fmt.Println(str)
+	case "INIT":
+		fields := bytes.Fields(key)
+		m, k := bloom.bloomInit(fields[0], fields[1])
+		fmt.Printf("OK m=%d k=%d\n", m, k)
+	case "STATS":
+		set := 0
+		load := float64(bloom.adds) / float64(bloom.nInit)
+		for _, v := range bloom.bits {
+			set += bits.OnesCount8(v)
+		}
+		fmt.Printf("m=%d k=%d n=%d load=%.4f set=%d\n", bloom.m, bloom.k, bloom.adds, load, set)
+	case "DUMP":
+		fmt.Printf("%x\n", bloom.bits)
 	}
 }
 
